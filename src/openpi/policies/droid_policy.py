@@ -36,67 +36,53 @@ class RiclDroidInputs(transforms.DataTransformFn):
     the correct elements of your dataset into the model.
     """
 
-    # The action dimension of the model. Will be used to pad state and actions for pi0 model (not pi0-FAST).
-    # Do not change this for your own dataset.
     action_dim: int
-
-    # The number of retrieved observations.
     num_retrieved_observations: int
-
-    # Determines which model will be used.
-    # Do not change this for your own dataset.
     model_type: _model.ModelType = _model.ModelType.PI0
 
+    def _build_single_observation(self, data: dict, prefix: str) -> dict:
+        state = transforms.pad_to_dim(np.asarray(data[f"{prefix}state"]), self.action_dim)
+
+        top_image = _parse_image(data[f"{prefix}top_image"])
+        wrist_image = _parse_image(data[f"{prefix}wrist_image"])
+
+        match self.model_type:
+            case _model.ModelType.PI0:
+                names = ("base_0_rgb", "left_wrist_0_rgb", "right_wrist_0_rgb")
+                images = (top_image, wrist_image, np.zeros_like(top_image))
+                image_masks = (np.True_, np.True_, np.False_)
+
+            case _model.ModelType.PI0_FAST:
+                right_image = _parse_image(data[f"{prefix}right_image"])
+                names = ("base_0_rgb", "base_1_rgb", "wrist_0_rgb")
+                images = (top_image, right_image, wrist_image)
+                image_masks = (np.True_, np.True_, np.True_)
+
+            case _:
+                raise ValueError(f"Unsupported model type: {self.model_type}")
+
+        result = {
+            f"{prefix}state": state,
+            f"{prefix}image": dict(zip(names, images, strict=True)),
+            f"{prefix}image_mask": dict(zip(names, image_masks, strict=True)),
+            f"{prefix}prompt": data[f"{prefix}prompt"],
+        }
+
+        if f"{prefix}actions" in data:
+            result[f"{prefix}actions"] = data[f"{prefix}actions"]
+
+        return result
+
     def __call__(self, data: dict) -> dict:
-        # We only mask padding for pi0 model, not pi0-FAST. Do not change this for your own dataset.
-        mask_padding = self.model_type == _model.ModelType.PI0
-
-        # Possibly need to parse images to uint8 (H,W,C) since LeRobot automatically
-        # stores as float32 (C,H,W), gets skipped for policy inference.
-        # Keep this for your own dataset, but if your dataset stores the images
-        # in a different key than "observation/image" or "observation/wrist_image",
-        # you should change it below.
-        # Pi0 models support three image inputs at the moment: one third-person view,
-        # and two wrist views (left and right). If your dataset does not have a particular type
-        # of image, e.g. wrist images, you can comment it out here and replace it with zeros like we do for the
-        # right wrist image below.
-
-        # Create inputs dict.
         all_prefix = [f"retrieved_{i}_" for i in range(self.num_retrieved_observations)] + ["query_"]
-        inputs_dicts = [{
-            f"{prefix}state": data[f"{prefix}state"],
-            f"{prefix}image": {
-                "base_0_rgb": _parse_image(data[f"{prefix}top_image"]),
-                "base_1_rgb": _parse_image(data[f"{prefix}right_image"]),
-                "left_wrist_0_rgb": _parse_image(data[f"{prefix}wrist_image"]),
-            },
-            f"{prefix}image_mask": {
-                "base_0_rgb": np.True_,
-                "base_1_rgb": np.True_,
-                "left_wrist_0_rgb": np.True_,
-            },
-        } for prefix in all_prefix]
 
-        # collapse to single dict
-        inputs = {k: v for d in inputs_dicts for k, v in d.items()}
-
-        # include retrieved actions and, if present, include query actions
-        for prefix in all_prefix[:-1]:
-            inputs[f"{prefix}actions"] = data[f"{prefix}actions"]
-        if "query_actions" in data:
-            inputs["query_actions"] = data["query_actions"]
-
-        # Pass the prompt (aka language instruction) to the model.
-        # Keep this for your own dataset (but modify the key if the instruction is not
-        # stored in "prompt"; the output dict always needs to have the key "prompt").
+        inputs = {}
         for prefix in all_prefix:
-            inputs[f"{prefix}prompt"] = data[f"{prefix}prompt"]
+            inputs.update(self._build_single_observation(data, prefix))
 
-        # Pass the exp_lamda_distances to the model if it is present
         if "exp_lamda_distances" in data:
             inputs["exp_lamda_distances"] = data["exp_lamda_distances"]
 
-        # Pass the inference_time flag to the model if it is present
         if "inference_time" in data:
             inputs["inference_time"] = data["inference_time"]
 
@@ -105,18 +91,13 @@ class RiclDroidInputs(transforms.DataTransformFn):
 
 @dataclasses.dataclass(frozen=True)
 class DroidInputs(transforms.DataTransformFn):
-    # The action dimension of the model. Will be used to pad state and actions.
     action_dim: int
-
-    # Determines which model will be used.
     model_type: _model.ModelType = _model.ModelType.PI0
 
     def __call__(self, data: dict) -> dict:
         state = np.concatenate([data["observation/joint_position"], data["observation/gripper_position"]])
         state = transforms.pad_to_dim(state, self.action_dim)
 
-        # Possibly need to parse images to uint8 (H,W,C) since LeRobot automatically
-        # stores as float32 (C,H,W), gets skipped for policy inference
         base_image = _parse_image(data["observation/exterior_image_1_left"])
         wrist_image = _parse_image(data["observation/wrist_image_left"])
 
@@ -127,7 +108,6 @@ class DroidInputs(transforms.DataTransformFn):
                 image_masks = (np.True_, np.True_, np.False_)
             case _model.ModelType.PI0_FAST:
                 names = ("base_0_rgb", "base_1_rgb", "wrist_0_rgb")
-                # We don't mask out padding images for FAST models.
                 images = (base_image, np.zeros_like(base_image), wrist_image)
                 image_masks = (np.True_, np.True_, np.True_)
             case _:

@@ -843,3 +843,306 @@ def restore_params(
     if all(kp[-1] == "value" for kp in flat_params):
         flat_params = {kp[:-1]: v for kp, v in flat_params.items()}
     return traverse_util.unflatten_dict(flat_params)
+
+
+@at.typecheck
+@struct.dataclass
+class RiclObservationPi05(Generic[ArrayT]):
+    """RICL observation format adapted for pi0.5.
+
+    This follows the original RICL brute-force structure (retrieved_0 ~ retrieved_19),
+    but uses the pi0.5 Observation fields instead of FAST-specific fields.
+    """
+
+    # Query observation
+    query_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    query_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    query_state: at.Float[ArrayT, "*b s"] | None = None
+    query_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    query_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    # Retrieved observation 0
+    retrieved_0_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_0_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_0_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_0_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_0_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_1_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_1_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_1_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_1_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_1_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_2_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_2_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_2_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_2_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_2_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_3_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_3_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_3_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_3_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_3_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_4_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_4_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_4_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_4_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_4_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_5_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_5_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_5_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_5_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_5_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_6_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_6_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_6_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_6_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_6_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_7_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_7_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_7_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_7_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_7_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_8_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_8_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_8_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_8_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_8_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_9_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_9_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_9_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_9_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_9_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_10_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_10_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_10_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_10_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_10_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_11_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_11_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_11_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_11_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_11_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_12_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_12_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_12_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_12_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_12_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_13_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_13_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_13_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_13_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_13_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_14_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_14_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_14_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_14_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_14_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_15_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_15_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_15_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_15_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_15_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_16_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_16_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_16_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_16_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_16_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_17_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_17_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_17_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_17_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_17_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_18_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_18_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_18_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_18_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_18_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    retrieved_19_images: dict[str, at.Float[ArrayT, "*b h w c"]] | None = None
+    retrieved_19_image_masks: dict[str, at.Bool[ArrayT, "*b"]] | None = None
+    retrieved_19_state: at.Float[ArrayT, "*b s"] | None = None
+    retrieved_19_tokenized_prompt: at.Int[ArrayT, "*b l"] | None = None
+    retrieved_19_tokenized_prompt_mask: at.Bool[ArrayT, "*b l"] | None = None
+
+    exp_lamda_distances: at.Float[ArrayT, "*b num_observations 1"] | None = None
+
+    @classmethod
+    def from_dict(cls, data: at.PyTree[ArrayT], num_retrieved_observations: int) -> "RiclObservationPi05[ArrayT]":
+        assert num_retrieved_observations <= 20, "TODO: fix this brute force code"
+
+        all_prefix = [f"retrieved_{i}_" for i in range(num_retrieved_observations)] + ["query_"]
+
+        for prefix in all_prefix:
+            if (f"{prefix}tokenized_prompt" in data) != (f"{prefix}tokenized_prompt_mask" in data):
+                raise ValueError(
+                    f"{prefix}tokenized_prompt and {prefix}tokenized_prompt_mask must be provided together."
+                )
+
+        image_keys = list(data["query_image"].keys())
+        for prefix in all_prefix:
+            for key in image_keys:
+                if data[f"{prefix}image"][key].dtype == np.uint8:
+                    data[f"{prefix}image"][key] = (
+                        data[f"{prefix}image"][key].astype(np.float32) / 255.0 * 2.0 - 1.0
+                    )
+
+        return cls(
+            query_images=data.get("query_image"),
+            query_image_masks=data.get("query_image_mask"),
+            query_state=data.get("query_state"),
+            query_tokenized_prompt=data.get("query_tokenized_prompt"),
+            query_tokenized_prompt_mask=data.get("query_tokenized_prompt_mask"),
+
+            retrieved_0_images=data.get("retrieved_0_image"),
+            retrieved_0_image_masks=data.get("retrieved_0_image_mask"),
+            retrieved_0_state=data.get("retrieved_0_state"),
+            retrieved_0_tokenized_prompt=data.get("retrieved_0_tokenized_prompt"),
+            retrieved_0_tokenized_prompt_mask=data.get("retrieved_0_tokenized_prompt_mask"),
+
+            retrieved_1_images=data.get("retrieved_1_image"),
+            retrieved_1_image_masks=data.get("retrieved_1_image_mask"),
+            retrieved_1_state=data.get("retrieved_1_state"),
+            retrieved_1_tokenized_prompt=data.get("retrieved_1_tokenized_prompt"),
+            retrieved_1_tokenized_prompt_mask=data.get("retrieved_1_tokenized_prompt_mask"),
+
+            retrieved_2_images=data.get("retrieved_2_image"),
+            retrieved_2_image_masks=data.get("retrieved_2_image_mask"),
+            retrieved_2_state=data.get("retrieved_2_state"),
+            retrieved_2_tokenized_prompt=data.get("retrieved_2_tokenized_prompt"),
+            retrieved_2_tokenized_prompt_mask=data.get("retrieved_2_tokenized_prompt_mask"),
+
+            retrieved_3_images=data.get("retrieved_3_image"),
+            retrieved_3_image_masks=data.get("retrieved_3_image_mask"),
+            retrieved_3_state=data.get("retrieved_3_state"),
+            retrieved_3_tokenized_prompt=data.get("retrieved_3_tokenized_prompt"),
+            retrieved_3_tokenized_prompt_mask=data.get("retrieved_3_tokenized_prompt_mask"),
+
+            retrieved_4_images=data.get("retrieved_4_image"),
+            retrieved_4_image_masks=data.get("retrieved_4_image_mask"),
+            retrieved_4_state=data.get("retrieved_4_state"),
+            retrieved_4_tokenized_prompt=data.get("retrieved_4_tokenized_prompt"),
+            retrieved_4_tokenized_prompt_mask=data.get("retrieved_4_tokenized_prompt_mask"),
+
+            retrieved_5_images=data.get("retrieved_5_image"),
+            retrieved_5_image_masks=data.get("retrieved_5_image_mask"),
+            retrieved_5_state=data.get("retrieved_5_state"),
+            retrieved_5_tokenized_prompt=data.get("retrieved_5_tokenized_prompt"),
+            retrieved_5_tokenized_prompt_mask=data.get("retrieved_5_tokenized_prompt_mask"),
+
+            retrieved_6_images=data.get("retrieved_6_image"),
+            retrieved_6_image_masks=data.get("retrieved_6_image_mask"),
+            retrieved_6_state=data.get("retrieved_6_state"),
+            retrieved_6_tokenized_prompt=data.get("retrieved_6_tokenized_prompt"),
+            retrieved_6_tokenized_prompt_mask=data.get("retrieved_6_tokenized_prompt_mask"),
+
+            retrieved_7_images=data.get("retrieved_7_image"),
+            retrieved_7_image_masks=data.get("retrieved_7_image_mask"),
+            retrieved_7_state=data.get("retrieved_7_state"),
+            retrieved_7_tokenized_prompt=data.get("retrieved_7_tokenized_prompt"),
+            retrieved_7_tokenized_prompt_mask=data.get("retrieved_7_tokenized_prompt_mask"),
+
+            retrieved_8_images=data.get("retrieved_8_image"),
+            retrieved_8_image_masks=data.get("retrieved_8_image_mask"),
+            retrieved_8_state=data.get("retrieved_8_state"),
+            retrieved_8_tokenized_prompt=data.get("retrieved_8_tokenized_prompt"),
+            retrieved_8_tokenized_prompt_mask=data.get("retrieved_8_tokenized_prompt_mask"),
+
+            retrieved_9_images=data.get("retrieved_9_image"),
+            retrieved_9_image_masks=data.get("retrieved_9_image_mask"),
+            retrieved_9_state=data.get("retrieved_9_state"),
+            retrieved_9_tokenized_prompt=data.get("retrieved_9_tokenized_prompt"),
+            retrieved_9_tokenized_prompt_mask=data.get("retrieved_9_tokenized_prompt_mask"),
+
+            retrieved_10_images=data.get("retrieved_10_image"),
+            retrieved_10_image_masks=data.get("retrieved_10_image_mask"),
+            retrieved_10_state=data.get("retrieved_10_state"),
+            retrieved_10_tokenized_prompt=data.get("retrieved_10_tokenized_prompt"),
+            retrieved_10_tokenized_prompt_mask=data.get("retrieved_10_tokenized_prompt_mask"),
+
+            retrieved_11_images=data.get("retrieved_11_image"),
+            retrieved_11_image_masks=data.get("retrieved_11_image_mask"),
+            retrieved_11_state=data.get("retrieved_11_state"),
+            retrieved_11_tokenized_prompt=data.get("retrieved_11_tokenized_prompt"),
+            retrieved_11_tokenized_prompt_mask=data.get("retrieved_11_tokenized_prompt_mask"),
+
+            retrieved_12_images=data.get("retrieved_12_image"),
+            retrieved_12_image_masks=data.get("retrieved_12_image_mask"),
+            retrieved_12_state=data.get("retrieved_12_state"),
+            retrieved_12_tokenized_prompt=data.get("retrieved_12_tokenized_prompt"),
+            retrieved_12_tokenized_prompt_mask=data.get("retrieved_12_tokenized_prompt_mask"),
+
+            retrieved_13_images=data.get("retrieved_13_image"),
+            retrieved_13_image_masks=data.get("retrieved_13_image_mask"),
+            retrieved_13_state=data.get("retrieved_13_state"),
+            retrieved_13_tokenized_prompt=data.get("retrieved_13_tokenized_prompt"),
+            retrieved_13_tokenized_prompt_mask=data.get("retrieved_13_tokenized_prompt_mask"),
+
+            retrieved_14_images=data.get("retrieved_14_image"),
+            retrieved_14_image_masks=data.get("retrieved_14_image_mask"),
+            retrieved_14_state=data.get("retrieved_14_state"),
+            retrieved_14_tokenized_prompt=data.get("retrieved_14_tokenized_prompt"),
+            retrieved_14_tokenized_prompt_mask=data.get("retrieved_14_tokenized_prompt_mask"),
+
+            retrieved_15_images=data.get("retrieved_15_image"),
+            retrieved_15_image_masks=data.get("retrieved_15_image_mask"),
+            retrieved_15_state=data.get("retrieved_15_state"),
+            retrieved_15_tokenized_prompt=data.get("retrieved_15_tokenized_prompt"),
+            retrieved_15_tokenized_prompt_mask=data.get("retrieved_15_tokenized_prompt_mask"),
+
+            retrieved_16_images=data.get("retrieved_16_image"),
+            retrieved_16_image_masks=data.get("retrieved_16_image_mask"),
+            retrieved_16_state=data.get("retrieved_16_state"),
+            retrieved_16_tokenized_prompt=data.get("retrieved_16_tokenized_prompt"),
+            retrieved_16_tokenized_prompt_mask=data.get("retrieved_16_tokenized_prompt_mask"),
+
+            retrieved_17_images=data.get("retrieved_17_image"),
+            retrieved_17_image_masks=data.get("retrieved_17_image_mask"),
+            retrieved_17_state=data.get("retrieved_17_state"),
+            retrieved_17_tokenized_prompt=data.get("retrieved_17_tokenized_prompt"),
+            retrieved_17_tokenized_prompt_mask=data.get("retrieved_17_tokenized_prompt_mask"),
+
+            retrieved_18_images=data.get("retrieved_18_image"),
+            retrieved_18_image_masks=data.get("retrieved_18_image_mask"),
+            retrieved_18_state=data.get("retrieved_18_state"),
+            retrieved_18_tokenized_prompt=data.get("retrieved_18_tokenized_prompt"),
+            retrieved_18_tokenized_prompt_mask=data.get("retrieved_18_tokenized_prompt_mask"),
+
+            retrieved_19_images=data.get("retrieved_19_image"),
+            retrieved_19_image_masks=data.get("retrieved_19_image_mask"),
+            retrieved_19_state=data.get("retrieved_19_state"),
+            retrieved_19_tokenized_prompt=data.get("retrieved_19_tokenized_prompt"),
+            retrieved_19_tokenized_prompt_mask=data.get("retrieved_19_tokenized_prompt_mask"),
+
+            exp_lamda_distances=data.get("exp_lamda_distances"),
+        )
+
+
+def extract_observation_from_ricl_observation_pi05(
+    ricl_observation: RiclObservationPi05,
+    prefix: str,
+) -> Observation:
+    return Observation(
+        images=getattr(ricl_observation, f"{prefix}images"),
+        image_masks=getattr(ricl_observation, f"{prefix}image_masks"),
+        state=getattr(ricl_observation, f"{prefix}state"),
+        tokenized_prompt=getattr(ricl_observation, f"{prefix}tokenized_prompt"),
+        tokenized_prompt_mask=getattr(ricl_observation, f"{prefix}tokenized_prompt_mask"),
+    )

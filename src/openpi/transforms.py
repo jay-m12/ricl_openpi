@@ -234,6 +234,27 @@ class ResizeImagesRicl(DataTransformFn):
         data[f"{prefix}image"] = {k: image_tools.resize_with_pad(v, self.height, self.width) for k, v in data[f"{prefix}image"].items()}
         return data
 
+@dataclasses.dataclass(frozen=True)
+class ResizeImagesRiclPi05(DataTransformFn):
+    height: int
+    width: int
+    num_retrieved_observations: int
+
+    def __call__(self, data: DataDict) -> DataDict:
+        for i in range(self.num_retrieved_observations):
+            prefix = f"retrieved_{i}_"
+            data[f"{prefix}image"] = {
+                k: image_tools.resize_with_pad(v, self.height, self.width)
+                for k, v in data[f"{prefix}image"].items()
+            }
+
+        prefix = "query_"
+        data[f"{prefix}image"] = {
+            k: image_tools.resize_with_pad(v, self.height, self.width)
+            for k, v in data[f"{prefix}image"].items()
+        }
+
+        return data
 
 @dataclasses.dataclass(frozen=True)
 class SubsampleActions(DataTransformFn):
@@ -302,6 +323,36 @@ class TokenizePrompt(DataTransformFn):
         tokens, token_masks = self.tokenizer.tokenize(prompt)
         return {**data, "tokenized_prompt": tokens, "tokenized_prompt_mask": token_masks}
 
+@dataclasses.dataclass(frozen=True)
+class TokenizePromptRiclPi05(DataTransformFn):
+    tokenizer: _tokenizer.PaligemmaTokenizer
+    num_retrieved_observations: int
+
+    def __call__(self, data: DataDict) -> DataDict:
+        new_data = {}
+
+        for i in range(self.num_retrieved_observations):
+            prefix = f"retrieved_{i}_"
+            prompt = data.pop(f"{prefix}prompt")
+
+            if not isinstance(prompt, str):
+                prompt = prompt.item()
+
+            tokens, token_masks = self.tokenizer.tokenize(prompt)
+            new_data[f"{prefix}tokenized_prompt"] = tokens
+            new_data[f"{prefix}tokenized_prompt_mask"] = token_masks
+
+        prefix = "query_"
+        prompt = data.pop(f"{prefix}prompt")
+
+        if not isinstance(prompt, str):
+            prompt = prompt.item()
+
+        tokens, token_masks = self.tokenizer.tokenize(prompt)
+        new_data[f"{prefix}tokenized_prompt"] = tokens
+        new_data[f"{prefix}tokenized_prompt_mask"] = token_masks
+
+        return {**data, **new_data}
 
 @dataclasses.dataclass(frozen=True)
 class TokenizeFASTInputs(DataTransformFn):

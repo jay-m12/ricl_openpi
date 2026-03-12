@@ -26,6 +26,7 @@ import openpi.shared.normalize as _normalize
 import openpi.training.optimizer as _optimizer
 import openpi.training.weight_loaders as weight_loaders
 import openpi.transforms as _transforms
+import openpi.models.pi05_ricl as pi05_ricl
 
 ModelType: TypeAlias = _model.ModelType
 # Work around a tyro issue with using nnx.filterlib.Filter directly.
@@ -351,7 +352,13 @@ class RiclDroidDataConfig(DataConfigFactory):
         # how to modify the transforms to match your dataset. Once you created your own transforms, you can
         # replace the transforms below with your own.
         data_transforms = _transforms.Group(
-            inputs=[droid_policy.RiclDroidInputs(action_dim=model_config.action_dim, num_retrieved_observations=model_config.num_retrieved_observations)],
+            inputs=[
+                droid_policy.RiclDroidInputs(
+                    action_dim=model_config.action_dim,
+                    num_retrieved_observations=model_config.num_retrieved_observations,
+                    model_type=ModelType.PI0_FAST,
+                )
+            ],
             outputs=[droid_policy.RiclDroidOutputs()],
         )
 
@@ -374,21 +381,29 @@ class RiclDroidDataConfig(DataConfigFactory):
         # Model transforms include things like tokenizing the prompt and action targets
         # You do not need to change anything here for your own dataset.
         model_transforms = _transforms.Group(
-                    inputs=[
-                        _transforms.ResizeImagesRicl(224, 224, model_config.num_retrieved_observations),
-                        _transforms.TokenizeFASTInputsRicl(
-                            _tokenizer.FASTTokenizerRicl(max_len = model_config.max_token_len, action_horizon=model_config.action_horizon, action_dim=model_config.action_dim),
-                            num_retrieved_observations=model_config.num_retrieved_observations,
-                        ),
-                    ],
-                    outputs=[
-                        _transforms.ExtractFASTActionsRicl(
-                            _tokenizer.FASTTokenizerRicl(max_len = model_config.max_token_len, action_horizon=model_config.action_horizon, action_dim=model_config.action_dim),
-                            action_horizon=model_config.action_horizon,
-                            action_dim=model_config.action_dim,
-                        )
-                    ],
+            inputs=[
+                _transforms.ResizeImagesRicl(224, 224, model_config.num_retrieved_observations),
+                _transforms.TokenizeFASTInputsRicl(
+                    _tokenizer.FASTTokenizerRicl(
+                        max_len=model_config.max_token_len,
+                        action_horizon=model_config.action_horizon,
+                        action_dim=model_config.action_dim,
+                    ),
+                    num_retrieved_observations=model_config.num_retrieved_observations,
+                ),
+            ],
+            outputs=[
+                _transforms.ExtractFASTActionsRicl(
+                    _tokenizer.FASTTokenizerRicl(
+                        max_len=model_config.max_token_len,
+                        action_horizon=model_config.action_horizon,
+                        action_dim=model_config.action_dim,
+                    ),
+                    action_horizon=model_config.action_horizon,
+                    action_dim=model_config.action_dim,
                 )
+            ],
+        )
 
         # We return all data transforms for training and inference. No need to change anything here.
         return dataclasses.replace(
@@ -398,6 +413,48 @@ class RiclDroidDataConfig(DataConfigFactory):
             model_transforms=model_transforms,
         )
 
+@dataclasses.dataclass(frozen=True)
+class RiclDroidDataConfigPi05(DataConfigFactory):
+    """
+    Data config for RICL + pi0.5 DROID.
+    Uses RICL-style multi-observation inputs, but pi0/pi0.5-style prompt tokenization.
+    """
+
+    @override
+    def create(self, assets_dirs: pathlib.Path, model_config: pi05_ricl.Pi05RiclConfig) -> DataConfig:
+        repack_transform = _transforms.Group(
+            inputs=[_transforms.IdentityTransform()],
+        )
+
+        data_transforms = _transforms.Group(
+            inputs=[
+                droid_policy.RiclDroidInputs(
+                    action_dim=model_config.action_dim,
+                    num_retrieved_observations=model_config.num_retrieved_observations,
+                    model_type=ModelType.PI0,
+                )
+            ],
+            outputs=[droid_policy.RiclDroidOutputs()],
+        )
+
+        model_transforms = _transforms.Group(
+            inputs=[
+                _transforms.ResizeImagesRiclPi05(
+                    224, 224, model_config.num_retrieved_observations
+                ),
+                _transforms.TokenizePromptRiclPi05(
+                    _tokenizer.PaligemmaTokenizer(model_config.max_token_len),
+                    num_retrieved_observations=model_config.num_retrieved_observations,
+                ),
+            ],
+        )
+
+        return dataclasses.replace(
+            self.create_base_config(assets_dirs),
+            repack_transforms=repack_transform,
+            data_transforms=data_transforms,
+            model_transforms=model_transforms,
+        )
 
 @dataclasses.dataclass(frozen=True)
 class TrainConfig:
@@ -569,6 +626,38 @@ _CONFIGS = [
         save_interval=300,
         keep_period=300,
         lr_schedule=_optimizer.CosineDecaySchedule(warmup_steps=300, peak_lr=2.5e-5, decay_steps=3000, decay_lr=2.5e-6),
+    ),
+    TrainConfig(
+        name="pi05_droid_ricl",
+        model=pi05_ricl.Pi05RiclConfig(
+            action_dim=32,
+            action_horizon=16,
+            max_token_len=180,
+            num_retrieved_observations=4,
+            pi05=True,
+        ),
+        data=RiclDroidDataConfigPi05(
+            repo_id=None,
+            assets=AssetsConfig(asset_id="droid"),
+            base_config=DataConfig(
+                prompt_from_task=False,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader(
+            "s3://openpi-assets/checkpoints/pi05_droid/params"
+        ),
+        num_train_steps=10_000,
+        batch_size=16,
+        ema_decay=None,
+        log_interval=1,
+        save_interval=300,
+        keep_period=300,
+        lr_schedule=_optimizer.CosineDecaySchedule(
+            warmup_steps=300,
+            peak_lr=2.5e-5,
+            decay_steps=3000,
+            decay_lr=2.5e-6,
+        ),
     ),
     #
     # RICL-Pi0-FAST-DROID Finetuning configs.
