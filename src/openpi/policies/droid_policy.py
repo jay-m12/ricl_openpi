@@ -47,7 +47,7 @@ class RiclDroidInputs(transforms.DataTransformFn):
         wrist_image = _parse_image(data[f"{prefix}wrist_image"])
 
         match self.model_type:
-            case _model.ModelType.PI0:
+            case _model.ModelType.PI0 | _model.ModelType.PI05:
                 names = ("base_0_rgb", "left_wrist_0_rgb", "right_wrist_0_rgb")
                 images = (top_image, wrist_image, np.zeros_like(top_image))
                 image_masks = (np.True_, np.True_, np.False_)
@@ -102,7 +102,7 @@ class DroidInputs(transforms.DataTransformFn):
         wrist_image = _parse_image(data["observation/wrist_image_left"])
 
         match self.model_type:
-            case _model.ModelType.PI0:
+            case _model.ModelType.PI0 | _model.ModelType.PI05:
                 names = ("base_0_rgb", "left_wrist_0_rgb", "right_wrist_0_rgb")
                 images = (base_image, wrist_image, np.zeros_like(base_image))
                 image_masks = (np.True_, np.True_, np.False_)

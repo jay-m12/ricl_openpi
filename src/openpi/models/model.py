@@ -14,7 +14,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import orbax.checkpoint as ocp
-
+import enum
 from openpi.shared import image_tools
 import openpi.shared.array_typing as at
 
@@ -24,9 +24,8 @@ ArrayT = TypeVar("ArrayT", at.Array, jax.ShapeDtypeStruct)
 
 
 class ModelType(enum.Enum):
-    """Supported model types."""
-
     PI0 = "pi0"
+    PI05 = "pi05"
     PI0_FAST = "pi0_fast"
 
 

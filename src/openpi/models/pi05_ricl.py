@@ -30,7 +30,7 @@ class Pi05RiclConfig(_model.BaseModelConfig):
     @property
     @override
     def model_type(self) -> _model.ModelType:
-        return _model.ModelType.PI0
+        return _model.ModelType.PI05
 
     @override
     def create(self, rng: at.KeyArrayLike) -> "Pi05Ricl":
@@ -154,7 +154,7 @@ class Pi05Ricl(Pi0):
         )
         query_obs = _model.preprocess_observation(preprocess_rng, query_obs, train=train)
 
-        suffix_tokens, suffix_mask, suffix_ar_mask = self.embed_suffix(
+        suffix_tokens, suffix_mask, suffix_ar_mask, adarms_cond = self.embed_suffix(
             query_obs, x_t, time
         )
 

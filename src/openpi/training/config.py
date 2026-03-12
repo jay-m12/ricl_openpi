@@ -107,7 +107,7 @@ class ModelTransformFactory(GroupFactory):
 
     def __call__(self, model_config: _model.BaseModelConfig) -> _transforms.Group:
         match model_config.model_type:
-            case _model.ModelType.PI0:
+            case _model.ModelType.PI0 | _model.ModelType.PI05:
                 return _transforms.Group(
                     inputs=[
                         _transforms.InjectDefaultPrompt(self.default_prompt),
@@ -134,7 +134,6 @@ class ModelTransformFactory(GroupFactory):
                         )
                     ],
                 )
-
 
 @dataclasses.dataclass(frozen=True)
 class DataConfigFactory(abc.ABC):
@@ -415,11 +414,6 @@ class RiclDroidDataConfig(DataConfigFactory):
 
 @dataclasses.dataclass(frozen=True)
 class RiclDroidDataConfigPi05(DataConfigFactory):
-    """
-    Data config for RICL + pi0.5 DROID.
-    Uses RICL-style multi-observation inputs, but pi0/pi0.5-style prompt tokenization.
-    """
-
     @override
     def create(self, assets_dirs: pathlib.Path, model_config: pi05_ricl.Pi05RiclConfig) -> DataConfig:
         repack_transform = _transforms.Group(
@@ -431,7 +425,7 @@ class RiclDroidDataConfigPi05(DataConfigFactory):
                 droid_policy.RiclDroidInputs(
                     action_dim=model_config.action_dim,
                     num_retrieved_observations=model_config.num_retrieved_observations,
-                    model_type=ModelType.PI0,
+                    model_type=ModelType.PI05,
                 )
             ],
             outputs=[droid_policy.RiclDroidOutputs()],
@@ -439,9 +433,7 @@ class RiclDroidDataConfigPi05(DataConfigFactory):
 
         model_transforms = _transforms.Group(
             inputs=[
-                _transforms.ResizeImagesRiclPi05(
-                    224, 224, model_config.num_retrieved_observations
-                ),
+                _transforms.ResizeImagesRiclPi05(224, 224, model_config.num_retrieved_observations),
                 _transforms.TokenizePromptRiclPi05(
                     _tokenizer.PaligemmaTokenizer(model_config.max_token_len),
                     num_retrieved_observations=model_config.num_retrieved_observations,
@@ -604,6 +596,24 @@ _CONFIGS = [
             ),
         ),
     ),
+    TrainConfig(
+        name="pi05_droid",
+        model=pi0.Pi0Config(
+            action_horizon=10,
+            pi05=True,
+        ),
+        data=SimpleDataConfig(
+            assets=AssetsConfig(asset_id="droid"),
+            data_transforms=lambda model: _transforms.Group(
+                inputs=[droid_policy.DroidInputs(action_dim=model.action_dim, model_type=ModelType.PI05)],
+                outputs=[droid_policy.DroidOutputs()],
+            ),
+            base_config=DataConfig(
+                prompt_from_task=True,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi05_droid/params"),
+    ),
     # 
     # Creating RICL-Pi0-FAST-DROID configs.
     # 
@@ -632,7 +642,7 @@ _CONFIGS = [
         model=pi05_ricl.Pi05RiclConfig(
             action_dim=32,
             action_horizon=16,
-            max_token_len=180,
+            max_token_len=200,
             num_retrieved_observations=4,
             pi05=True,
         ),
@@ -643,9 +653,7 @@ _CONFIGS = [
                 prompt_from_task=False,
             ),
         ),
-        weight_loader=weight_loaders.CheckpointWeightLoader(
-            "s3://openpi-assets/checkpoints/pi05_droid/params"
-        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi05_droid/params"),
         num_train_steps=10_000,
         batch_size=16,
         ema_decay=None,
