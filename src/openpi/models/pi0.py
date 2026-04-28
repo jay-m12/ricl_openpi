@@ -371,9 +371,10 @@ class Pi0(_model.BaseModel):
             positions = jnp.sum(prefix_mask, axis=-1)[:, None] + jnp.cumsum(suffix_mask, axis=-1) - 1
 
             (prefix_out, suffix_out), _ = self.PaliGemma.llm(
-                [prefix_tokens, suffix_tokens],
-                mask=attn_mask,
+                [None, suffix_tokens],
+                mask=full_attn_mask,
                 positions=positions,
+                kv_cache=kv_cache,
                 adarms_cond=[None, adarms_cond],
             )
             assert prefix_out is None

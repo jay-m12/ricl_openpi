@@ -389,17 +389,17 @@ def create_data_loader(
     )
 
     class DataLoaderImpl(DataLoader):
-        def __init__(self, data_config: _config.DataConfig, data_loader: TorchDataLoader):
-            self._data_config = data_config
-            self._data_loader = data_loader
-
-        def data_config(self) -> _config.DataConfig:
-            return self._data_config
-
         def __iter__(self):
             for batch in self._data_loader:
                 if "ricl" in config.name:
-                    yield _model.RiclObservation.from_dict(batch, config.model.num_retrieved_observations), batch["query_actions"]
+                    if config.model.model_type == _model.ModelType.PI05:
+                        yield _model.RiclObservationPi05.from_dict(
+                            batch, config.model.num_retrieved_observations
+                        ), batch["query_actions"]
+                    else:
+                        yield _model.RiclObservation.from_dict(
+                            batch, config.model.num_retrieved_observations
+                        ), batch["query_actions"]
                 else:
                     yield _model.Observation.from_dict(batch), batch["actions"]
 

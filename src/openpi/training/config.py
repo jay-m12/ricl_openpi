@@ -612,7 +612,7 @@ _CONFIGS = [
                 prompt_from_task=True,
             ),
         ),
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi05_droid/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/scratch/doyoung/projects/rag_vla/ricl_openpi/checkpoints/pi05_base/params"),
     ),
     # 
     # Creating RICL-Pi0-FAST-DROID configs.
@@ -653,7 +653,7 @@ _CONFIGS = [
                 prompt_from_task=False,
             ),
         ),
-        weight_loader=weight_loaders.CheckpointWeightLoader("s3://openpi-assets/checkpoints/pi05_droid/params"),
+        weight_loader=weight_loaders.CheckpointWeightLoader("/scratch/doyoung/projects/rag_vla/ricl_openpi/checkpoints/pi05_base/params"),
         num_train_steps=10_000,
         batch_size=16,
         ema_decay=None,

@@ -1,0 +1,36 @@
+
+scontrol show job 348432
+JobId=348432 JobName=bash
+   UserId=doyoung(3157567) GroupId=doyoung(3157567) MCS_label=N/A
+   Priority=374876 Nice=0 Account=def-bussmann QOS=normal
+   JobState=COMPLETING Reason=TimeLimit Dependency=(null)
+   Requeue=0 Restarts=0 BatchFlag=0 Reboot=0 ExitCode=0:9
+   RunTime=02:00:07 TimeLimit=02:00:00 TimeMin=N/A
+   SubmitTime=2026-03-15T01:28:28 EligibleTime=2026-03-15T01:28:28
+   AccrueTime=2026-03-15T01:28:28
+   StartTime=2026-03-15T01:28:56 EndTime=2026-03-15T03:29:03 Deadline=N/A
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-03-15T01:28:56 Scheduler=Backfill
+   Partition=compute AllocNode:Sid=trig-login01:3455152
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=trig0042
+   BatchHost=trig0042
+   NumNodes=1 NumCPUs=24 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:*
+   ReqTRES=cpu=1,mem=48G,node=1,billing=1,gres/gpu=1
+   AllocTRES=cpu=24,mem=48G,node=1,billing=1,gres/gpu=1
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=1 MinMemoryNode=48G MinTmpDiskNode=0
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=bash
+   WorkDir=/scratch/doyoung/projects/rag_vla/ricl_openpi
+   CpusPerTres=gpu:24
+   TresPerNode=gres/gpu:1
+   
+
+sacct -j 348432
+JobID           JobName    Account    Elapsed  MaxVMSize     MaxRSS  SystemCPU    UserCPU ExitCode 
+------------ ---------- ---------- ---------- ---------- ---------- ---------- ---------- -------- 
+348432             bash def-bussm+   02:00:07                         00:00:00   00:00:00      0:0 
+348432.exte+     extern def-bussm+   02:00:07                         00:00:00   00:00:00      0:0 
+348432.0           bash def-bussm+   02:00:05                         00:00:00   00:00:00      0:0 
+
