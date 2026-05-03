@@ -321,6 +321,44 @@ class LeRobotLiberoDataConfig(DataConfigFactory):
             model_transforms=model_transforms,
         )
     
+@dataclasses.dataclass(frozen=True)
+class LeRobotUR5HFDataConfig(DataConfigFactory):
+    @override
+    def create(self, assets_dirs: pathlib.Path, model_config: _model.BaseModelConfig) -> DataConfig:
+        repack_transform = _transforms.Group(
+            inputs=[
+                _transforms.RepackTransform(
+                    {
+                        "observation/image": "observation.images.cam_side2",
+                        "observation/wrist_image": "observation.images.cam_color",
+                        "observation/state": "observation.state",
+                        "actions": "action",
+                        "prompt": "prompt",
+                    }
+                )
+            ]
+        )
+
+        data_transforms = _transforms.Group(
+            inputs=[
+                libero_policy.LiberoInputs(
+                    action_dim=model_config.action_dim,
+                    model_type=model_config.model_type,
+                )
+            ],
+            outputs=[libero_policy.LiberoOutputs()],
+        )
+
+        model_transforms = ModelTransformFactory()(model_config)
+
+        return dataclasses.replace(
+            self.create_base_config(assets_dirs),
+            repack_transforms=repack_transform,
+            data_transforms=data_transforms,
+            model_transforms=model_transforms,
+            action_sequence_keys=("action",),
+        )
+
 
 @dataclasses.dataclass(frozen=True)
 class RiclDroidDataConfig(DataConfigFactory):
@@ -433,9 +471,17 @@ class RiclDroidDataConfigPi05(DataConfigFactory):
 
         model_transforms = _transforms.Group(
             inputs=[
-                _transforms.ResizeImagesRiclPi05(224, 224, model_config.num_retrieved_observations),
+                _transforms.ResizeImagesRiclPi05(
+                    224,
+                    224,
+                    model_config.num_retrieved_observations,
+                ),
                 _transforms.TokenizePromptRiclPi05(
                     _tokenizer.PaligemmaTokenizer(model_config.max_token_len),
+                    num_retrieved_observations=model_config.num_retrieved_observations,
+                ),
+                _transforms.PadStatesAndActionsRicl(
+                    action_dim=model_config.action_dim,
                     num_retrieved_observations=model_config.num_retrieved_observations,
                 ),
             ],
@@ -614,6 +660,29 @@ _CONFIGS = [
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("/scratch/doyoung/projects/rag_vla/ricl_openpi/checkpoints/pi05_base/params"),
     ),
+    TrainConfig(
+        name="pi05_ur5_hf",
+        model=pi0.Pi0Config(
+            pi05=True,
+            action_horizon=10,
+            action_dim=32,
+            discrete_state_input=False,
+        ),
+        data=LeRobotUR5HFDataConfig(
+            repo_id="DORLR/Deformable-StackedCuboid-Insertion-v0-Scripted-1500-6",
+            assets=AssetsConfig(asset_id="ur5_hf"),
+            base_config=DataConfig(
+                local_files_only=True,
+                prompt_from_task=True,
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader(
+            "/scratch/doyoung/openpi_cache/openpi-assets/checkpoints/pi05_base/params"
+        ),
+        batch_size=8,
+        num_train_steps=1,
+        wandb_enabled=False,
+    ),
     # 
     # Creating RICL-Pi0-FAST-DROID configs.
     # 
@@ -637,36 +706,36 @@ _CONFIGS = [
         keep_period=300,
         lr_schedule=_optimizer.CosineDecaySchedule(warmup_steps=300, peak_lr=2.5e-5, decay_steps=3000, decay_lr=2.5e-6),
     ),
-    TrainConfig(
-        name="pi05_droid_ricl",
-        model=pi05_ricl.Pi05RiclConfig(
-            action_dim=32,
-            action_horizon=16,
-            max_token_len=200,
-            num_retrieved_observations=4,
-            pi05=True,
-        ),
-        data=RiclDroidDataConfigPi05(
-            repo_id=None,
-            assets=AssetsConfig(asset_id="droid"),
-            base_config=DataConfig(
-                prompt_from_task=False,
-            ),
-        ),
-        weight_loader=weight_loaders.CheckpointWeightLoader("/scratch/doyoung/projects/rag_vla/ricl_openpi/checkpoints/pi05_base/params"),
-        num_train_steps=10_000,
-        batch_size=16,
-        ema_decay=None,
-        log_interval=1,
-        save_interval=300,
-        keep_period=300,
-        lr_schedule=_optimizer.CosineDecaySchedule(
-            warmup_steps=300,
-            peak_lr=2.5e-5,
-            decay_steps=3000,
-            decay_lr=2.5e-6,
-        ),
-    ),
+    # TrainConfig(
+    #     name="pi05_droid_ricl",
+    #     model=pi05_ricl.Pi05RiclConfig(
+    #         action_dim=32,
+    #         action_horizon=16,
+    #         max_token_len=200,
+    #         num_retrieved_observations=4,
+    #         pi05=True,
+    #     ),
+    #     data=RiclDroidDataConfigPi05(
+    #         repo_id=None,
+    #         assets=AssetsConfig(asset_id="droid"),
+    #         base_config=DataConfig(
+    #             prompt_from_task=False,
+    #         ),
+    #     ),
+    #     weight_loader=weight_loaders.CheckpointWeightLoader("/scratch/doyoung/projects/rag_vla/ricl_openpi/checkpoints/pi05_base/params"),
+    #     num_train_steps=10_000,
+    #     batch_size=16,
+    #     ema_decay=None,
+    #     log_interval=1,
+    #     save_interval=300,
+    #     keep_period=300,
+    #     lr_schedule=_optimizer.CosineDecaySchedule(
+    #         warmup_steps=300,
+    #         peak_lr=2.5e-5,
+    #         decay_steps=3000,
+    #         decay_lr=2.5e-6,
+    #     ),
+    # ),
     #
     # RICL-Pi0-FAST-DROID Finetuning configs.
     # Please carefully change the name and finetuning_collected_demos_dir to match your experiment.
