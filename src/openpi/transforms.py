@@ -580,3 +580,24 @@ def _assert_quantile_stats(norm_stats: at.PyTree[NormStats]) -> None:
             raise ValueError(
                 f"quantile stats must be provided if use_quantile_norm is True. Key {k} is missing q01 or q99."
             )
+
+
+@dataclasses.dataclass(frozen=True)
+class PadStatesAndActionsRicl(DataTransformFn):
+    action_dim: int
+    num_retrieved_observations: int
+
+    def __call__(self, data: dict) -> dict:
+        prefixes = [f"retrieved_{i}_" for i in range(self.num_retrieved_observations)] + ["query_"]
+
+        for prefix in prefixes:
+            state_key = f"{prefix}state"
+            action_key = f"{prefix}actions"
+
+            if state_key in data:
+                data[state_key] = pad_to_dim(data[state_key], self.action_dim)
+
+            if action_key in data:
+                data[action_key] = pad_to_dim(data[action_key], self.action_dim)
+
+        return data

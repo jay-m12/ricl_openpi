@@ -41,7 +41,7 @@ class RiclDroidInputs(transforms.DataTransformFn):
     model_type: _model.ModelType = _model.ModelType.PI0
 
     def _build_single_observation(self, data: dict, prefix: str) -> dict:
-        state = transforms.pad_to_dim(np.asarray(data[f"{prefix}state"]), self.action_dim)
+        state = np.asarray(data[f"{prefix}state"])
 
         top_image = _parse_image(data[f"{prefix}top_image"])
         wrist_image = _parse_image(data[f"{prefix}wrist_image"])

@@ -67,6 +67,7 @@ def convert_simple_norm_stats_to_retrieved_and_query_norm_stats(norm_stats_basic
         new_norm_stats["norm_stats"][f"{prefix}{key}"] = norm_stats_basic["norm_stats"][key]
 
     for file in ["assets/pi0_fast_droid_ricl/droid/norm_stats.json",
+                "assets/pi05_droid_ricl/droid/norm_stats.json",
                 ]:
         if not os.path.exists(file):
             os.makedirs(file.split("/norm_stats.json")[0], exist_ok=True)

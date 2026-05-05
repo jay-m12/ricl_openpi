@@ -45,6 +45,7 @@ class Policy(BasePolicy):
         self._sample_kwargs = sample_kwargs or {}
         self._metadata = metadata or {}
         self._model = model
+        self._model_type = model.model_type
 
     @override
     def infer(self, obs: dict) -> dict:  # type: ignore[misc]
@@ -88,7 +89,7 @@ def get_action_chunk_at_inference_time(actions, step_idx, action_horizon):
 class RiclPolicy(BasePolicy):
     def __init__(
         self,
-        model: _pi0_fast_ricl.Pi0FASTRicl,
+        model: _model.BaseModel,
         *,
         rng: at.KeyArrayLike | None = None,
         transforms: Sequence[_transforms.DataTransformFn] = (),
@@ -99,6 +100,7 @@ class RiclPolicy(BasePolicy):
         use_action_interpolation: bool | None = None,
         lamda: float | None = None,
         action_horizon: int | None = None,
+        
     ):
         self._sample_actions = nnx_utils.module_jit(model.sample_actions)
         self._input_transform = _transforms.compose(transforms)
@@ -110,6 +112,8 @@ class RiclPolicy(BasePolicy):
         self._use_action_interpolation = use_action_interpolation
         self._lamda = lamda
         self._action_horizon = action_horizon
+        self._model_type = model.model_type
+
         # setup demos for retrieval
         print()
         logger.info(f'loading demos from {demos_dir}...')
@@ -226,9 +230,25 @@ class RiclPolicy(BasePolicy):
 
         self._rng, sample_rng = jax.random.split(self._rng)
         logger.info(f'sampling...')
+
+        if self._model_type == _model.ModelType.PI05:
+            ricl_observation = _model.RiclObservationPi05.from_dict(
+                inputs,
+                num_retrieved_observations=self._knn_k,
+            )
+        else:
+            ricl_observation = _model.RiclObservation.from_dict(
+                inputs,
+                num_retrieved_observations=self._knn_k,
+            )
+
         outputs = {
             "query_state": inputs["query_state"],
-            "query_actions": self._sample_actions(sample_rng, _model.RiclObservation.from_dict(inputs, num_retrieved_observations=self._knn_k), **self._sample_kwargs),
+            "query_actions": self._sample_actions(
+                sample_rng,
+                ricl_observation,
+                **self._sample_kwargs,
+            ),
         }
 
         # Unbatch and convert to np.ndarray.

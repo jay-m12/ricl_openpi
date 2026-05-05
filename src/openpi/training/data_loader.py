@@ -1,6 +1,7 @@
 from collections.abc import Iterator, Sequence
 import multiprocessing
 import os
+import pathlib
 import typing
 from typing import Protocol, SupportsIndex, TypeVar
 
@@ -181,7 +182,12 @@ class RiclDroidDataset(Dataset):
         # files from the collected demos for training
         for group_name, ep_fols in collected_demos_infos["groups_to_ep_fols"].items():
             for ep_fol in ep_fols:
-                indices_files.append(f"ricl_droid_preprocessing/{ep_fol}/indices_and_distances.npz")
+                ep_fol = ep_fol.replace("collected_demos_training/", "")
+                file_path = os.path.join(outer_dir, ep_fol, "indices_and_distances.npz")
+                if not os.path.exists(file_path):
+                    print(f"Skipping missing file: {file_path}")
+                    continue
+                indices_files.append(file_path)
         # actual loading...
         count_droid = 0
         count_collected_demos = 0
@@ -225,12 +231,12 @@ class RiclDroidDataset(Dataset):
         all_ep_data_paths = {ep_idx: 
                                     f"{ds_fol}/episode_{ep_idx}.npz" 
                                     if ep_idx < 100000 else 
-                                    f"ricl_droid_preprocessing/{collected_demos_infos['ep_idxs_to_fol'][str(ep_idx)]}/processed_demo.npz"
+                                    f"{outer_dir}/{collected_demos_infos['ep_idxs_to_fol'][str(ep_idx)].replace('collected_demos_training/', '')}/processed_demo.npz"
                             for ep_idx in all_ep_idxs}
         all_ep_prompts = {ep_idx: 
                                     json.load(open(f"{ds_fol}/episode_{ep_idx}.json"))["language_instruction"]  
                                     if ep_idx < 100000 else 
-                                    " ".join(collected_demos_infos['ep_idxs_to_fol'][str(ep_idx)].split("/")[1].split("_")[1:])
+                                    " ".join(collected_demos_infos['ep_idxs_to_fol'][str(ep_idx)].replace('collected_demos_training/', '').split("/")[0].split("_")[1:])
                             for ep_idx in all_ep_idxs}
         
         # if all episode prompts are the same, print the first prompt
@@ -244,8 +250,8 @@ class RiclDroidDataset(Dataset):
         self.all_retrieved_indices = all_retrieved_indices
         self.all_query_indices = all_query_indices
         self.all_distances = all_distances
-        self.use_action_interpolation = model_config.use_action_interpolation
-        self.lamda = model_config.lamda
+        self.use_action_interpolation = getattr(model_config, "use_action_interpolation", False)
+        self.lamda = getattr(model_config, "lamda", 1.0)
         self.action_horizon = model_config.action_horizon
 
     def __getitem__(self, index: SupportsIndex) -> dict:
@@ -306,6 +312,20 @@ def create_dataset(data_config: _config.DataConfig, model_config: _model.BaseMod
         raise ValueError("Repo ID is not set. Cannot create dataset.")
     if repo_id == "fake":
         return FakeDataset(model_config, num_samples=1024)
+
+    # Older LeRobot uses LEROBOT_HOME only; HF docs often use HF_LEROBOT_HOME for the same root.
+    if os.environ.get("LEROBOT_HOME") is None and os.environ.get("HF_LEROBOT_HOME"):
+        os.environ["LEROBOT_HOME"] = os.environ["HF_LEROBOT_HOME"]
+
+    # HuggingFace `datasets` writes builder cache under HF_HOME (default ~/.cache/huggingface), which is
+    # often not writable on clusters; mirror HF_HOME next to the LeRobot data root when unset.
+    if os.environ.get("HF_HOME") is None:
+        lerobot_root = os.environ.get("LEROBOT_HOME") or os.environ.get("HF_LEROBOT_HOME")
+        if lerobot_root:
+            os.environ.setdefault(
+                "HF_HOME",
+                str(pathlib.Path(lerobot_root).resolve().parent / ".cache" / "huggingface"),
+            )
 
     dataset_meta = lerobot_dataset.LeRobotDatasetMetadata(repo_id, local_files_only=data_config.local_files_only)
     dataset = lerobot_dataset.LeRobotDataset(
@@ -389,6 +409,9 @@ def create_data_loader(
     )
 
     class DataLoaderImpl(DataLoader):
+        def __init__(self, data_loader):
+            self._data_loader = data_loader
+
         def __iter__(self):
             for batch in self._data_loader:
                 if "ricl" in config.name:
@@ -403,8 +426,7 @@ def create_data_loader(
                 else:
                     yield _model.Observation.from_dict(batch), batch["actions"]
 
-    return DataLoaderImpl(data_config, data_loader)
-
+    return DataLoaderImpl(data_loader)
 
 class TorchDataLoader:
     def __init__(
